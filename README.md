@@ -1,5 +1,7 @@
 # kev-vllm
 
+> Vision experiment: an isolated image-conditioned pooling prototype is available on this branch. Synthetic image decisions work, but the probability parity gate currently fails. See [results and limitations](docs/vision-experiment.md). The standard server and Playground remain text-only.
+
 **English** | [한국어](README.ko.md)
 
 An unofficial, experimental vLLM plugin for [Kev](https://github.com/jaredpalmer/kev) decision models, maintained by [chahero](https://github.com/chahero).

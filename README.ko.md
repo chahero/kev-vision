@@ -1,5 +1,7 @@
 # kev-vllm
 
+> 이미지 실험: 이 브랜치에는 이미지 기반 선택지 판단 프로토타입이 있습니다. 합성 이미지 판단은 동작하지만 확률 일치 기준은 아직 미통과입니다. [실험 결과와 한계](docs/vision-experiment.md)를 참고하세요. 기본 서버와 Playground는 현재 텍스트 전용입니다.
+
 [English](README.md) | **한국어**
 
 [Kev](https://github.com/jaredpalmer/kev) 의사결정 모델을 위한 비공식 실험용 vLLM 플러그인입니다. [chahero](https://github.com/chahero)가 관리합니다.
