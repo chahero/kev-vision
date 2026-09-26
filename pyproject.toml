@@ -18,4 +18,3 @@ kev_vision = "kev_vision:register"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["kev_vision*"]
-
