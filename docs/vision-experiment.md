@@ -1,12 +1,12 @@
 # Experimental image-conditioned Kev decisions
 
 Status: feasibility demonstrated on synthetic inputs; numerical parity is **not yet accepted**.
-Branch: `experiment/vision`. Linux aarch64 / GB10 / BF16 only, 2026-09-27.
+Project: `kev-vision`, extracted from `kev-vllm` branch `experiment/vision`. Linux aarch64 / GB10 / BF16 only, 2026-09-27.
 This is an unofficial extension, not an upstream Kev vision checkpoint or a production feature.
 
 ## What was implemented
 
-`KevQwen3_5VisionForPooling` uses vLLM's Qwen3.5 multimodal backbone and the existing Kev pointer pooler. The original text class and default server commands remain text-only.
+`KevQwen3_5VisionForPooling` uses vLLM's Qwen3.5 multimodal backbone and the existing Kev pointer pooler. The text class is retained only as a comparison baseline; no image HTTP service or UI is implemented.
 
 The reference experiment loads the exact full Qwen3.5-4B-Base revision, including its 297 vision tensors. It replaces only the language model's 426 tensors with the previously validated BF16 Kev merge, using strict key matching. No visual weights are borrowed from an Instruct model, and no parameters are trained. The original fp32 pointer head and its text-fitted temperature are reused. That temperature has not been calibrated for images.
 
@@ -41,11 +41,11 @@ A controlled run using `TORCH_SDPA` for vLLM's vision attention did not resolve 
 Use the project's pinned Linux environment. Starting from a prepared text workspace:
 
 ```bash
-bash scripts/setup_kev_vllm.sh
+bash scripts/setup_kev_vision.sh
 # Creates the 27-row baseline in this workspace:
 .venv/bin/python scripts/validate_kev_vllm.py
-# Generates images, runs reference/control comparisons and exports full weights:
-OMP_NUM_THREADS=4 .venv/bin/python scripts/experiment_vision.py --export
+# Setup already exported the full weights; repeat reference/control comparisons:
+OMP_NUM_THREADS=4 .venv/bin/python scripts/experiment_vision.py
 # Expected nonzero exit: the 0.02 probability gate is currently not satisfied.
 HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
   .venv/bin/python scripts/test_kev_vision_vllm.py --vision-attention FLASH_ATTN
@@ -61,7 +61,7 @@ Runtime files are under the ignored `artifacts/vision-experiment/`: generated PN
 
 ## Boundaries and next work
 
-- Offline `vllm.LLM.encode` was exercised. The current HTTP query client, server launcher, and Playground do not accept images yet.
+- Offline `vllm.LLM.encode` was exercised. HTTP serving and a Playground are not implemented in this project.
 - Single image, fixed 256×256 fixtures, BF16, eager mode, no prefix caching/chunked prefill; no Windows validation.
 - Real photos, document layouts, varied resolutions/aspect ratios, option permutations with images, robustness, and latency/memory benchmarks remain untested.
 - Before merging a supported feature: localize the CAT numerical mismatch, measure realistic image-task accuracy and calibration, then add request validation and HTTP/UI image handling.

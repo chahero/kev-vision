@@ -26,4 +26,7 @@ for name in ('config.json', 'model.safetensors', 'head.pt', 'tokenizer.json', 't
     if not (out / name).is_file():
         raise FileNotFoundError(out / name)
 PY
-echo 'Ready. Start with: bash scripts/serve_kev_vllm.sh'
+if [[ ! -f artifacts/vision-experiment/merged-vision/model.safetensors ]]; then
+  .venv/bin/python scripts/experiment_vision.py --export
+fi
+echo 'Ready. See README.md for the vision experiment and its known parity limitation.'

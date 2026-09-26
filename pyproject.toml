@@ -3,22 +3,19 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kev-vllm"
+name = "kev-vision"
 version = "0.1.0"
-description = "Experimental text-only Kev pointer model for vLLM 0.30.0"
+description = "Experimental image-conditioned Kev decisions on Qwen3.5 and vLLM"
 requires-python = ">=3.12"
 dependencies = [
-    "vllm==0.30.0; sys_platform != 'win32'",
-    "vllm==0.29.0; sys_platform == 'win32'",
+    "vllm==0.30.0",
     "transformers==5.17.0",
 ]
 
 [project.entry-points."vllm.general_plugins"]
-kev_pointer = "kev_vllm:register"
+kev_vision = "kev_vision:register"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["kev_vllm*"]
+include = ["kev_vision*"]
 
-[project.urls]
-Repository = "https://github.com/chahero/kev-vllm"
