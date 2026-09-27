@@ -1,42 +1,35 @@
 # kev-vision
 
-Experimental image-conditioned decisions using the original Qwen3.5 vision tower, Kev language adaptation and pointer head, and vLLM pooling. Extracted from the local `kev-vllm` vision experiment; this is an independent research project and is not an official Kev release.
+Experimental image-conditioned decisions using the Qwen3.5 vision tower, Kev language weights and pointer head, and vLLM pooling. No additional training; independent project, not an official Kev release.
 
-[한국어](README.ko.md) · [Experiment details](docs/vision-experiment.md)
+[한국어](README.ko.md) · [Validation](docs/validation.md) · [Attribution](THIRD_PARTY.md)
 
-## Current evidence
+## Run
 
-- No additional training. All 14 simple synthetic images were classified correctly by both Transformers and vLLM. Blank/no-image controls each scored 5/14.
-- All 27 existing text decisions matched the reference.
-- **Probability parity remains failed**: the CAT fixture differs by 0.03005 in the vLLM batch and 0.03490 individually, exceeding the unchanged 0.02 tolerance. Real-photo accuracy and image probability calibration are unverified.
-- GB10 warm single-request median latency: 59 ms at 256×256, 82 ms at 512×512, 136 ms at 768×768. These are synthetic local measurements, excluding file decoding, text encoding, HTTP and model loading; they do not establish recognition accuracy at the larger sizes.
-
-## Local setup and experiments
-
-Linux aarch64 / NVIDIA GB10, Python 3.12, BF16, vLLM 0.30.0. Install `uv` and a compatible NVIDIA driver first. Windows is not validated for this project.
+Validated on Linux aarch64 / NVIDIA GB10, Python 3.12, BF16, eager mode. Install `uv` and a compatible NVIDIA driver, then run from the repository root:
 
 ```bash
-cd /path/to/kev-vision
 bash scripts/setup_kev_vision.sh
-# Optional regeneration of the original 27-question text baseline:
-.venv/bin/python scripts/validate_kev_vllm.py
-# Reference image and control scoring; setup already creates the vision export:
+# Generate the 27-row text reference and image reference.
+OMP_NUM_THREADS=4 .venv/bin/python scripts/validate_kev_vllm.py --phase reference
 OMP_NUM_THREADS=4 .venv/bin/python scripts/experiment_vision.py
-# Expected exit code 1 until the known probability mismatch is resolved:
-HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
-  .venv/bin/python scripts/test_kev_vision_vllm.py --vision-attention FLASH_ATTN
 .venv/bin/python -m unittest discover -s tests -v
-# Optional local speed measurement (model loading takes about a minute):
 HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
-  .venv/bin/python scripts/benchmark_vision.py
+  .venv/bin/python scripts/test_kev_vision_vllm.py \
+  --vision-attention FLASH_ATTN --vision-precision reference --all-singletons
+# Append --benchmark for cache-disabled regression and latency measurements.
 ```
 
-The `kev_vision` package registers the experimental vision architecture plus the text reference architecture. Baseline helper scripts retain their `kev_vllm` filenames for continuity. Inputs, exports, generated images and logs live under ignored `artifacts/`; `.venv` is local and independent. No image HTTP service or UI is implemented yet.
+Use `--vision-precision reference` for the validated arithmetic. Direct integrations pass `hf_overrides={"kev_vision_precision": "reference"}` to vLLM with eager execution. Omitting the option retains the native path, which fails the probability tolerance.
 
-## Next work
+## Validation and scope
 
-Localize the numerical mismatch, evaluate real images and varied resolutions, then design a validated image request API. Additional training and calibration should be driven by those results.
+- 69 inputs × forward/reversed/singleton × cache on/off: 414 comparisons passed, matching reference argmax with maximum probability error 1.50 percentage points (tolerance: 2).
+- Synthetic images: 14/14 correct; blank/no-image controls: 5/14 each. The 27 text decisions matched the reference.
+- Local 256px singleton latency median: 61.5 ms versus native 60.6 ms. Excludes loading, input preparation and HTTP.
 
-[Upstream attribution](THIRD_PARTY.md). No license for this project's original code has been selected yet.
+Real photos/documents, varied-resolution accuracy and image probability calibration remain unverified. No image HTTP API or UI is included. See the validation report for exact limits and results.
 
-The historical `docs/vision-provenance.json` records paths before extraction: `kev_vllm/` now maps to `kev_vision/`. All 26 recorded source/result/image/weight hashes were verified during migration. The original experiment commit is preserved in this repository history.
+`artifacts/` contains locally downloaded inputs, exported weights and generated fixtures; `.venv/` is the local environment. Both are excluded from upload. Setup downloads pinned upstream inputs. No license for this project's original code has been selected; upstream components retain their own terms.
+
+This project does not require the separate `kev-vllm` repository or package. Helper filenames retain `kev_vllm` from extraction, but their implementations are local. Setup downloads pinned upstream Kev encoder/checkpoint source and weights; the text merge is an input to the vision export.

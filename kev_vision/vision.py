@@ -22,6 +22,14 @@ class KevQwen3_5VisionForPooling(Qwen3_5ForConditionalGeneration):
     def __init__(self, *, vllm_config, prefix=''):
         super().__init__(vllm_config=vllm_config, prefix=prefix)
         cfg=vllm_config.model_config.hf_config
+        precision = getattr(cfg, 'kev_vision_precision', 'native')
+        if precision not in ('native', 'reference'):
+            raise ValueError(f'Unknown kev_vision_precision: {precision}')
+        if precision == 'reference':
+            if not vllm_config.model_config.enforce_eager:
+                raise ValueError('Reference vision precision currently requires eager execution')
+            from .precision import configure_reference_precision
+            configure_reference_precision(self.visual, cfg.vision_config)
         head_cfg=SimpleNamespace(hidden_size=cfg.text_config.hidden_size,
                                  **{key:getattr(cfg,key) for key in ('kev_head_dim','kev_temperature','kev_option_end_id','kev_decide_id')})
         self.pooler=KevPointerPooler(head_cfg)

@@ -29,4 +29,4 @@ PY
 if [[ ! -f artifacts/vision-experiment/merged-vision/model.safetensors ]]; then
   .venv/bin/python scripts/experiment_vision.py --export
 fi
-echo 'Ready. See README.md for the vision experiment and its known parity limitation.'
+echo 'Ready. See README.md to run with --vision-precision reference.'
