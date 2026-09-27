@@ -1,0 +1,113 @@
+{
+  "vision_attention": "TORCH_SDPA",
+  "vision_precision": "reference",
+  "mm_processor_cache": "vllm default",
+  "input_ids_match": true,
+  "singleton_diagnostic": {
+    "name": "color-red",
+    "probabilities": [
+      0.9937683343887329,
+      0.00377145828679204,
+      0.002460211282595992
+    ],
+    "reference_error": 6.985664367675781e-05,
+    "same_argmax": true,
+    "batch_difference": 9.059906005859375e-06
+  },
+  "passed": true,
+  "tolerance": 0.02,
+  "summaries": {
+    "batch": {
+      "image": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.0005819797515869141,
+        "failures": [],
+        "correct": 12
+      },
+      "blank": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.0009303390979766846,
+        "failures": [],
+        "correct": 4
+      },
+      "no_image": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.000307619571685791,
+        "failures": [],
+        "correct": 4
+      },
+      "text_regression": {
+        "rows": 27,
+        "same_argmax": 27,
+        "max_error": 0.0008902251720428467,
+        "failures": []
+      }
+    },
+    "reversed_batch": {
+      "image": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.0005819797515869141,
+        "failures": [],
+        "correct": 12
+      },
+      "blank": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.0009303390979766846,
+        "failures": [],
+        "correct": 4
+      },
+      "no_image": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.000307619571685791,
+        "failures": [],
+        "correct": 4
+      },
+      "text_regression": {
+        "rows": 27,
+        "same_argmax": 27,
+        "max_error": 0.0008902251720428467,
+        "failures": []
+      }
+    },
+    "singletons": {
+      "image": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.000553131103515625,
+        "failures": [],
+        "correct": 12
+      },
+      "blank": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.0010346472263336182,
+        "failures": [],
+        "correct": 4
+      },
+      "no_image": {
+        "rows": 12,
+        "same_argmax": 12,
+        "max_error": 0.00036716461181640625,
+        "failures": [],
+        "correct": 4
+      },
+      "text_regression": {
+        "rows": 27,
+        "same_argmax": 27,
+        "max_error": 0.0006178021430969238,
+        "failures": []
+      }
+    }
+  },
+  "date": "2026-09-27",
+  "platform": "Windows native / TITAN RTX 24 GiB / Python 3.13.2 / vLLM 0.29.0 community build",
+  "dtype": "float16",
+  "comparisons": 189,
+  "unit_tests": 13
+}

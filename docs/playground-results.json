@@ -1,0 +1,147 @@
+[
+  {
+    "id": "color-red",
+    "passed": true,
+    "response": {
+      "selected": "Red",
+      "selected_index": 0,
+      "probabilities": [
+        {
+          "option": "Red",
+          "probability": 0.9937683343887329
+        },
+        {
+          "option": "Green",
+          "probability": 0.00377145828679204
+        },
+        {
+          "option": "Blue",
+          "probability": 0.002460211282595992
+        }
+      ],
+      "tokens": 90,
+      "elapsed_ms": 321.3,
+      "input_size": [
+        256,
+        256
+      ],
+      "vision_precision": "reference"
+    }
+  },
+  {
+    "id": "shape-circle",
+    "passed": true,
+    "response": {
+      "selected": "Circle",
+      "selected_index": 0,
+      "probabilities": [
+        {
+          "option": "Circle",
+          "probability": 0.994390070438385
+        },
+        {
+          "option": "Square",
+          "probability": 0.004360666032880545
+        },
+        {
+          "option": "Triangle",
+          "probability": 0.0012492771493270993
+        }
+      ],
+      "tokens": 89,
+      "elapsed_ms": 88.9,
+      "input_size": [
+        256,
+        256
+      ],
+      "vision_precision": "reference"
+    }
+  },
+  {
+    "id": "count-3",
+    "passed": true,
+    "response": {
+      "selected": "Three",
+      "selected_index": 2,
+      "probabilities": [
+        {
+          "option": "One",
+          "probability": 0.018375849351286888
+        },
+        {
+          "option": "Two",
+          "probability": 0.008540932089090347
+        },
+        {
+          "option": "Three",
+          "probability": 0.9730832576751709
+        }
+      ],
+      "tokens": 91,
+      "elapsed_ms": 137.1,
+      "input_size": [
+        256,
+        256
+      ],
+      "vision_precision": "reference"
+    }
+  },
+  {
+    "id": "position-left",
+    "passed": true,
+    "response": {
+      "selected": "Left",
+      "selected_index": 0,
+      "probabilities": [
+        {
+          "option": "Left",
+          "probability": 0.8941439986228943
+        },
+        {
+          "option": "Center",
+          "probability": 0.0924135074019432
+        },
+        {
+          "option": "Right",
+          "probability": 0.013442444615066051
+        }
+      ],
+      "tokens": 90,
+      "elapsed_ms": 149.0,
+      "input_size": [
+        256,
+        256
+      ],
+      "vision_precision": "reference"
+    }
+  },
+  {
+    "id": "shape-triangle",
+    "passed": true,
+    "response": {
+      "selected": "Triangle",
+      "selected_index": 2,
+      "probabilities": [
+        {
+          "option": "Circle",
+          "probability": 0.0009053447865881026
+        },
+        {
+          "option": "Square",
+          "probability": 0.002609732560813427
+        },
+        {
+          "option": "Triangle",
+          "probability": 0.9964849948883057
+        }
+      ],
+      "tokens": 89,
+      "elapsed_ms": 147.7,
+      "input_size": [
+        256,
+        256
+      ],
+      "vision_precision": "reference"
+    }
+  }
+]

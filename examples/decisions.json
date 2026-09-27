@@ -1,0 +1,82 @@
+[
+  {
+    "id": "color-red",
+    "title_ko": "색상 판별",
+    "title_en": "Identify a color",
+    "description_ko": "What color is the large shape?",
+    "description_en": "What color is the large shape?",
+    "image": "/examples/images/color-red.png",
+    "state": "Inspect the supplied image.",
+    "question": "What color is the large shape?",
+    "options": [
+      "Red",
+      "Green",
+      "Blue"
+    ],
+    "expected_index": 0
+  },
+  {
+    "id": "shape-circle",
+    "title_ko": "도형 판별",
+    "title_en": "Recognize a shape",
+    "description_ko": "Which geometric shape is shown?",
+    "description_en": "Which geometric shape is shown?",
+    "image": "/examples/images/shape-circle.png",
+    "state": "Inspect the supplied image.",
+    "question": "Which geometric shape is shown?",
+    "options": [
+      "Circle",
+      "Square",
+      "Triangle"
+    ],
+    "expected_index": 0
+  },
+  {
+    "id": "count-3",
+    "title_ko": "개수 세기",
+    "title_en": "Count objects",
+    "description_ko": "How many separate black circles are visible?",
+    "description_en": "How many separate black circles are visible?",
+    "image": "/examples/images/count-3.png",
+    "state": "Inspect the supplied image.",
+    "question": "How many separate black circles are visible?",
+    "options": [
+      "One",
+      "Two",
+      "Three"
+    ],
+    "expected_index": 2
+  },
+  {
+    "id": "position-left",
+    "title_ko": "위치 판단",
+    "title_en": "Locate an object",
+    "description_ko": "Where is the red circle horizontally?",
+    "description_en": "Where is the red circle horizontally?",
+    "image": "/examples/images/position-left.png",
+    "state": "Inspect the supplied image.",
+    "question": "Where is the red circle horizontally?",
+    "options": [
+      "Left",
+      "Center",
+      "Right"
+    ],
+    "expected_index": 0
+  },
+  {
+    "id": "shape-triangle",
+    "title_ko": "다른 도형 비교",
+    "title_en": "Compare shapes",
+    "description_ko": "Which geometric shape is shown?",
+    "description_en": "Which geometric shape is shown?",
+    "image": "/examples/images/shape-triangle.png",
+    "state": "Inspect the supplied image.",
+    "question": "Which geometric shape is shown?",
+    "options": [
+      "Circle",
+      "Square",
+      "Triangle"
+    ],
+    "expected_index": 2
+  }
+]

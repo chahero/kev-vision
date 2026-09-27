@@ -9,10 +9,10 @@ import math
 import time
 from pathlib import Path
 
-from kev_runtime import AUDIT, ROOT
+from kev_runtime import AUDIT, ROOT, DTYPE, WINDOWS
 from prepare_kev_vllm import base_path, load_pinned_kev
 
-OUT = ROOT / 'artifacts/vision-experiment'
+OUT = ROOT / 'artifacts' / ('windows-vision-experiment' if WINDOWS else 'vision-experiment')
 
 
 def fixtures():
@@ -87,11 +87,11 @@ def load_reference():
     import sys
     km=sys.modules['pinned_kev.model']
     base=base_path()
-    snapshot_download('Qwen/Qwen3.5-4B-Base',revision=base.name,allow_patterns=['preprocessor_config.json'])
+    processor_path=base if (base/'preprocessor_config.json').is_file() else snapshot_download('Qwen/Qwen3.5-4B-Base',revision=base.name,allow_patterns=['preprocessor_config.json'],cache_dir=ROOT/'artifacts/hf-cache/hub')
     tokenizer=AutoTokenizer.from_pretrained(AUDIT/'merged-text',local_files_only=True)
-    processor=AutoImageProcessor.from_pretrained(base,local_files_only=True)
+    processor=AutoImageProcessor.from_pretrained(processor_path,local_files_only=True)
     print('Loading full pinned base, including vision tower',flush=True)
-    model=AutoModel.from_pretrained(base,dtype=torch.bfloat16,device_map='cuda',local_files_only=True,attn_implementation='sdpa').eval()
+    model=AutoModel.from_pretrained(base,dtype=getattr(torch, DTYPE),device_map='cuda',local_files_only=True,attn_implementation='sdpa').eval()
     merged=load_file(AUDIT/'merged-text/model.safetensors',device='cpu')
     weights={k.removeprefix('model.'):v for k,v in merged.items()}
     model.language_model.load_state_dict(weights,strict=True)
@@ -150,7 +150,7 @@ def main():
         same=max(range(len(p)),key=p.__getitem__)==max(range(len(p)),key=row['probabilities'].__getitem__)
         text.append({'error':error,'same_argmax':same})
     summary={condition:sum(r['outputs'][condition]['selected']==r['expected'] for r in rows) for condition in ('image','blank','no_image')}
-    report={'scope':'Synthetic feasibility only; no visual task training or calibration','dtype':'bfloat16','cases':len(rows),'correct':summary,'rows':rows,'text_regression':text}
+    report={'scope':'Synthetic feasibility only; no visual task training or calibration','dtype':DTYPE,'cases':len(rows),'correct':summary,'rows':rows,'text_regression':text}
     (OUT/'reference-result.json').write_text(json.dumps(report,indent=2)+'\n')
     print('SUMMARY',summary,'text',text,flush=True)
     if args.export:
@@ -168,7 +168,7 @@ def main():
         temporary=out/'model.safetensors.partial'
         save_file(weights,temporary,metadata={'format':'pt'})
         temporary.replace(out/'model.safetensors')
-        (out/'export-manifest.json').write_text(json.dumps({'base_revision':base_path().name, 'text_export':json.loads((AUDIT/'merged-text/export-manifest.json').read_text()), 'tensors':len(weights), 'dtype':'bfloat16', 'experimental':True},indent=2)+'\n')
+        (out/'export-manifest.json').write_text(json.dumps({'base_revision':base_path().name, 'text_export':json.loads((AUDIT/'merged-text/export-manifest.json').read_text()), 'tensors':len(weights), 'dtype':DTYPE, 'experimental':True},indent=2)+'\n')
         print('Exported',len(weights),'tensors',flush=True)
     if not all(r['same_argmax'] and r['error']<0.02 for r in text):
         raise SystemExit('Text regression failed')

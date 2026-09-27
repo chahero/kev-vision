@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "Experimental image-conditioned Kev decisions on Qwen3.5 and vLLM"
 requires-python = ">=3.12"
 dependencies = [
-    "vllm==0.30.0",
+    "vllm==0.30.0; sys_platform != 'win32'",
+    "vllm==0.29.0; sys_platform == 'win32'",
     "transformers==5.17.0",
 ]
 

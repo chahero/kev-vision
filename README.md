@@ -4,6 +4,57 @@
 
 An unofficial, experimental vLLM plugin that takes an image, state, question and options, and returns option probabilities and the selected option. It does not generate chat responses. It combines the Qwen3.5 vision tower with Kev language weights and pointer head without additional training.
 
+## Try it in the browser
+
+![Kev Vision with a real local model response](docs/assets/playground-en.png)
+
+After setup, double-click **`run_vision.bat`** on Windows. The model loads once,
+then the browser opens at <http://127.0.0.1:18092>.
+Choose an image example or upload your own PNG/JPEG/WEBP, edit the question and
+options, and inspect the probabilities or copy the response JSON. The interface
+supports Korean and English. Images are processed locally and are not saved by the app.
+
+Linux: `.venv/bin/python scripts/vision_playground.py --open`.
+Keep the console open; use Ctrl+C to stop. No Node build or cloud API key is needed.
+
+[Image examples](examples/README.md) · [Playground and upload API](docs/playground.md)
+
+## Compared with kev-vllm
+
+| | kev-vllm | kev-vision |
+| --- | --- | --- |
+| Input | State, question, options | One image plus state, question, options |
+| Model | Kev text backbone and pointer head | Qwen vision tower plus Kev text weights and pointer head |
+| Output | Option probabilities | Option probabilities |
+| Browser demo | Text decisions | Image upload and decisions |
+
+Both are unofficial experiments. Neither generates chat responses; this repository
+does not require installing the separate kev-vllm package.
+
+## Native Windows quick start
+
+```powershell
+.\scripts\setup_kev_vision.ps1
+.\run_vision.bat
+```
+
+Setup creates this repository's own **`.venv`** (Python 3.13), installs the pinned
+community Windows wheel and exports FP16 weights. WSL is not required.
+The wheel URL and SHA256 are in `requirements-windows.txt`; plain PyPI
+`pip install vllm` is not the tested Windows installation path.
+
+| Validated profile | vLLM | Precision | Vision attention |
+| --- | --- | --- | --- |
+| Windows / TITAN RTX 24 GiB / Python 3.13 | 0.29.0 community build | FP16 | TORCH_SDPA |
+| Linux aarch64 / GB10 / Python 3.12 | 0.30.0 | BF16 | FLASH_ATTN |
+
+Windows: 63 inputs × forward/reversed/singleton = **189 passing comparisons**,
+12/12 synthetic images correct, and maximum reference probability error **0.104 percentage points** (rounded up).
+All 13 unit/API tests passed, and all five examples passed through the real upload API.
+The optional Linux font fixtures CAT/DOG were not generated on this Windows run.
+These are smoke/regression results, not real-photo accuracy claims.
+[Windows setup and validation](docs/windows.md).
+
 ## How it works
 
 ```text
@@ -14,11 +65,11 @@ Image + state + question + options
   → Option probabilities + highest-probability option
 ```
 
-The CLI corrects image orientation, preserves aspect ratio and pads with white to 256×256. It uses reference precision, BF16, eager execution and FLASH_ATTN. Option probabilities do not guarantee correctness or establish calibrated confidence on real photos.
+The CLI corrects image orientation, preserves aspect ratio and pads with white to 256×256. It uses reference precision and eager execution: BF16/FLASH_ATTN on Linux, FP16/TORCH_SDPA on Windows. Option probabilities do not guarantee correctness or establish calibrated confidence on real photos.
 
-## Setup
+## Linux setup
 
-Validated on Linux aarch64 / NVIDIA GB10, Python 3.12, PyTorch 2.13.0 / CUDA 13.0, vLLM 0.30.0, Transformers 5.17.0 and PEFT 0.21.0. Windows and other GPU configurations have not been validated for this project.
+Validated on Linux aarch64 / NVIDIA GB10, Python 3.12, PyTorch 2.13.0 / CUDA 13.0, vLLM 0.30.0, Transformers 5.17.0 and PEFT 0.21.0. The additional Windows profile is documented above; other GPU configurations remain unvalidated.
 
 Install `uv` and a compatible NVIDIA driver. Allow several tens of GB for downloads, the environment and caches. The merged text and vision models alone occupy approximately 7.9 GiB and 8.5 GiB. Initial preparation and CLI inference require a GPU.
 
@@ -74,7 +125,7 @@ tests/                        # Input and precision checks
 docs/                         # Final validation report and numerical evidence
 ```
 
-## Run validation
+## Linux validation commands
 
 After setup, prepare the 27-row text reference and run image/text regression. These commands use the GPU; run them sequentially. Reproducing all 14 fixtures, including CAT/DOG, requires the system DejaVu Sans Bold font. Without it, only 12 are generated.
 
@@ -89,13 +140,13 @@ HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
 
 Add `--benchmark` for cache-disabled regression and timing. The CLI selects `reference` automatically; the regression script requires it explicitly. Omitting it can fail the probability gate on the native path. Three input tests are skipped if model inputs have not been prepared.
 
-## Validation and scope
+## Linux validation and scope
 
 - 69 inputs × forward/reversed/singleton × cache on/off: 414 comparisons passed, matching reference argmax with maximum probability error 1.50 percentage points (tolerance: 2).
 - Synthetic images: 14/14 correct; blank/no-image controls: 5/14 each. The 27 text decisions matched the reference.
 - Local 256px singleton latency median: 61.5 ms versus native 60.6 ms. Excludes loading, input preparation and HTTP.
 
-Real photos/documents, varied-resolution accuracy and image probability calibration remain unverified. No image HTTP API or UI is included. See the validation report for exact limits and results.
+Real photos/documents, varied-resolution accuracy and image probability calibration remain unverified. The local playground provides an image upload API; see its separate guide. See the validation report for exact limits and results.
 
 `artifacts/` contains locally downloaded inputs, exported weights and generated fixtures; `.venv/` is the local environment. Both are excluded from upload. Setup downloads pinned upstream inputs. No license for this project's original code has been selected; upstream components retain their own terms.
 
@@ -110,6 +161,6 @@ This project does not require the separate `kev-vllm` repository or package. Hel
 | Context overflow | Shorten state, question or options. State including image: 1,024 tokens; total row: 2,048 tokens |
 | Model registration or package error | Use `.venv/bin/python`; reinstall the plugin with `uv pip install --python .venv/bin/python --no-deps -e .` if needed |
 
-The profile uses one image, one GPU, two concurrent sequences, and disables prefix caching and chunked prefill. No image HTTP API or UI is included. Downscaling can discard small details such as document text.
+The profile uses one image, one GPU, two concurrent sequences, and disables prefix caching and chunked prefill. The local playground provides an image upload API; see its separate guide. Downscaling can discard small details such as document text.
 
 [Detailed validation](docs/validation.md) · [Upstream attribution and licenses](THIRD_PARTY.md)

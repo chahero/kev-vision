@@ -29,7 +29,7 @@ def parse_args(argv=None):
 def main():
     args = parse_args()
     from experiment_vision import OUT, encode_inputs
-    from kev_runtime import AUDIT, engine_options
+    from kev_runtime import AUDIT, engine_options, WINDOWS
     from prepare_kev_vllm import load_pinned_kev
 
     model_path = OUT / 'merged-vision'
@@ -69,7 +69,7 @@ def main():
     options = engine_options()
     options.update(model=str(model_path), limit_mm_per_prompt={'image': 1, 'video': 0},
                    mm_processor_kwargs={'min_pixels': 65536, 'max_pixels': 65536},
-                   mm_encoder_attn_backend='FLASH_ATTN',
+                   mm_encoder_attn_backend='TORCH_SDPA' if WINDOWS else 'FLASH_ATTN',
                    hf_overrides={'kev_vision_precision': 'reference'})
     model = LLM(**options)
     result = model.encode([prompt], pooling_task='token_embed',

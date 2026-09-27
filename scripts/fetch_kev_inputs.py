@@ -41,7 +41,7 @@ def main():
         snapshot_download("jaredpalmer/kev-4b", revision=KEV_REV, local_dir=checkpoint, allow_patterns=required)
     base = snapshot_download(BASE_REPO, revision=BASE_REV, local_files_only=args.offline,
                              allow_patterns=["config.json", "model.safetensors.index.json", "*.safetensors",
-                                             "tokenizer.json", "tokenizer_config.json", "vocab.json", "merges.txt"])
+                                             "tokenizer.json", "tokenizer_config.json", "vocab.json", "merges.txt", "preprocessor_config.json"])
     base_path = Path(base)
     index = json.loads((base_path / "model.safetensors.index.json").read_text())
     for filename in set(index["weight_map"].values()) | {"config.json", "tokenizer.json", "tokenizer_config.json"}:
