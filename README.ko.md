@@ -1,26 +1,93 @@
 # kev-vision
 
-이미지·질문·선택지를 받아 선택 결과와 점수를 계산하는 실험 프로젝트입니다. Qwen3.5 비전 인코더, Kev 언어 가중치·판단 헤드, vLLM을 사용합니다. 추가 학습은 하지 않았으며 공식 Kev 배포물이 아닙니다.
+[English](README.md) | **한국어**
 
-[English](README.md) · [검증 결과](docs/validation.md) · [외부 구성요소](THIRD_PARTY.md)
+이미지·상황·질문·선택지를 입력하면 각 선택지의 확률과 선택 결과를 반환하는 비공식 실험용 vLLM 플러그인입니다. 자유로운 채팅 응답을 생성하지 않습니다. Qwen3.5 비전 인코더와 Kev 언어 가중치·판단 헤드를 추가 학습 없이 결합합니다.
 
-## 실행
+## 동작 방식
 
-Linux aarch64 / NVIDIA GB10, Python 3.12, BF16, eager 환경에서 검증했습니다. `uv`와 호환 NVIDIA 드라이버를 준비한 뒤 저장소 루트에서 실행합니다.
+```text
+이미지 + 상황 + 질문 + 선택지
+  → 이미지 전처리·Kev 입력 인코딩
+  → Qwen3.5 비전 인코더 + Kev 언어 모델 (vLLM)
+  → Kev pointer head
+  → 선택지별 확률 + 가장 높은 확률의 선택지
+```
+
+CLI는 이미지 방향을 보정하고, 비율을 유지한 채 흰 여백을 넣어 256×256으로 맞춥니다. `reference` 정밀도·BF16·eager·FLASH_ATTN 설정을 사용합니다. 선택지별 확률은 정답 보장이나 실제 사진에 대한 보정된 신뢰도를 뜻하지 않습니다.
+
+## 설치
+
+검증 환경은 Linux aarch64 / NVIDIA GB10, Python 3.12, PyTorch 2.13.0 / CUDA 13.0, vLLM 0.30.0, Transformers 5.17.0, PEFT 0.21.0입니다. Windows 및 다른 GPU 환경은 이 프로젝트에서 검증하지 않았습니다.
+
+`uv`와 호환 NVIDIA 드라이버를 준비하세요. 다운로드·가상환경·캐시를 포함해 수십 GB의 디스크 여유 공간이 필요합니다. 로컬 병합 모델만 텍스트 약 7.9 GiB, 비전 약 8.5 GiB이며, 최초 준비와 CLI 실행에는 GPU를 사용합니다.
 
 ```bash
+git clone https://github.com/chahero/kev-vision.git
+cd kev-vision
 bash scripts/setup_kev_vision.sh
-# Generate the 27-row text reference and image reference.
+```
+
+설치는 `.venv` 생성 → 고정 버전의 원본 자료 다운로드 → Kev 텍스트 가중치 병합 → 비전 모델 내보내기와 합성 이미지 생성을 수행합니다. 완료된 모델은 재사용합니다. `pip install -e .`만으로는 모델이 준비되지 않습니다.
+
+## 이미지로 실행하기
+
+최초 설치 후 생성된 예제로 실행합니다. 텍스트 기준값 재생성이나 전체 회귀 검증은 CLI 실행의 필수 단계가 아닙니다.
+
+```bash
+HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
+  .venv/bin/python scripts/query_kev_vision.py \
+  --image artifacts/vision-experiment/images/color-red.png \
+  --question "What color is the large shape?" \
+  --options "Red" "Green" "Blue" \
+  --output artifacts/my-result.json
+```
+
+이 예제는 `Red`를 선택합니다. 자신의 파일을 사용하려면 `--image`를 바꾸고 질문과 선택지를 수정하세요. 선택지는 서로 다른 비어 있지 않은 문자열을 2개 이상 전달합니다. 추가 상황은 `--state "설명"`으로 전달하며 기본값은 `Inspect the supplied image.`입니다.
+
+결과 JSON에는 `selected_index`(0부터 시작), `selected_option`, 입력 순서대로 나열된 `options`의 `text`·`probability`가 들어갑니다. 콘솔에는 엔진 로그도 출력되므로 JSON 파일이 필요하면 `--output`을 사용하세요. 기존 출력 파일은 덮어씁니다. 각 실행은 모델을 새로 로딩하므로 전체 CLI 소요 시간은 아래 추론 시간보다 깁니다.
+
+위 예제의 실제 출력 중 선택 결과는 다음과 같습니다. 확률은 실행 조건에 따라 조금 달라질 수 있습니다.
+
+```json
+{"selected_index": 0, "selected_option": "Red", "options": [{"text": "Red", "probability": 0.9939622}, {"text": "Green", "probability": 0.0036906}, {"text": "Blue", "probability": 0.0023471}]}
+```
+
+## 프로젝트 구조
+
+```text
+kev_vision/
+  __init__.py                  # vLLM plugin registration
+  model.py                     # Shared pointer head and text reference model
+  vision.py                    # Image-conditioned pooling model
+  precision.py                 # Reference-aligned vision arithmetic
+scripts/
+  setup_kev_vision.sh           # Environment and model preparation
+  fetch_kev_inputs.py           # Pinned upstream downloads
+  prepare_kev_vllm.py           # Text weight merge used by the vision export
+  experiment_vision.py          # Vision export, fixtures and reference scoring
+  query_kev_vision.py           # Local image decision CLI
+  kev_runtime.py               # Shared runtime settings
+  validate_kev_vllm.py          # Text regression reference and checks
+  test_kev_vision_vllm.py        # Image/text regression and optional timing
+tests/                        # Input and precision checks
+docs/                         # Final validation report and numerical evidence
+```
+
+## 검증 실행
+
+설치 후 다음 명령으로 텍스트 기준 27개를 준비하고 이미지·텍스트 회귀를 실행합니다. GPU를 사용하며 각 명령은 순서대로 실행합니다. CAT/DOG를 포함한 동일한 14개 합성 이미지를 재현하려면 시스템에 DejaVu Sans Bold 폰트가 필요합니다. 없으면 12개만 생성됩니다.
+
+```bash
 OMP_NUM_THREADS=4 .venv/bin/python scripts/validate_kev_vllm.py --phase reference
 OMP_NUM_THREADS=4 .venv/bin/python scripts/experiment_vision.py
 .venv/bin/python -m unittest discover -s tests -v
 HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
   .venv/bin/python scripts/test_kev_vision_vllm.py \
   --vision-attention FLASH_ATTN --vision-precision reference --all-singletons
-# Append --benchmark for cache-disabled regression and latency measurements.
 ```
 
-검증된 계산 경로는 `--vision-precision reference`로 선택합니다. 직접 연동할 때는 vLLM에 `hf_overrides={"kev_vision_precision": "reference"}`와 eager 설정을 전달합니다. 옵션을 생략한 기본 `native` 경로는 확률 오차 기준을 통과하지 못합니다.
+`--benchmark`를 추가하면 캐시를 끈 회귀와 속도를 측정합니다. CLI는 `reference`를 자동 사용하지만 검증 스크립트에서는 명시해야 합니다. 생략하면 기본 `native` 경로의 알려진 확률 차이로 실패할 수 있습니다. 입력 테스트 3개는 모델 자료가 없으면 건너뜁니다.
 
 ## 검증 범위
 
@@ -33,3 +100,16 @@ HF_HUB_OFFLINE=1 VLLM_NO_USAGE_STATS=1 OMP_NUM_THREADS=4 \
 모델·입력·생성 이미지는 로컬 `artifacts/`, 가상환경은 `.venv/`에 두며 업로드에서 제외합니다. 설치 스크립트가 고정된 버전의 원본 자료를 준비합니다. 자체 코드 라이선스는 아직 선택하지 않았으며 외부 구성요소에는 각 원본 조건이 적용됩니다.
 
 별도 `kev-vllm` 저장소나 패키지는 필요하지 않습니다. 일부 스크립트 파일명에만 `kev_vllm`이 남아 있으며 구현은 이 프로젝트 안에 있습니다. 설치 시 고정 버전의 원본 Kev 인코더·체크포인트 소스와 가중치를 다운로드하고, 텍스트 가중치 병합 결과를 비전 모델 생성에 사용합니다.
+
+## 문제 해결과 제한
+
+| 증상 | 확인할 내용 |
+| --- | --- |
+| 모델·토크나이저·원본 소스가 없음 | `bash scripts/setup_kev_vision.sh` 실행 여부 확인 |
+| GPU 메모리 부족 또는 예약 실패 | GPU 여유 메모리를 확인하고 필요하면 `KEV_GPU_MEMORY_UTILIZATION` 조정. 검증 기본값은 `0.18`이며 장비별 최소 요구량은 검증하지 않음 |
+| 입력 길이 초과 | 상황·질문·선택지를 줄임. 이미지 포함 상황 1,024토큰, 전체 2,048토큰 제한 |
+| 모델 등록 또는 패키지 오류 | `.venv/bin/python` 사용 여부 확인. 필요하면 `uv pip install --python .venv/bin/python --no-deps -e .`로 플러그인 재등록 |
+
+단일 이미지·단일 GPU를 사용하며 동시 시퀀스 2개, prefix caching·chunked prefill 비활성 설정입니다. 이미지 HTTP API·UI는 없습니다. 작은 이미지로 축소하므로 문서의 작은 글자 등은 손실될 수 있습니다.
+
+[최종 검증 상세](docs/validation.md) · [외부 구성요소와 라이선스](THIRD_PARTY.md)
